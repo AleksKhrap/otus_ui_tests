@@ -1,28 +1,37 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 class BasePage:
-    PRICES = (By.XPATH, '//*[@class="price"]')
-    CURRENCY_BUTTON = (By.XPATH, '//button[@data-toggle="dropdown"]')
-    DOLLAR = (By.XPATH, '//*[@title="US Dollar"]')
-
-    def __init__(self, browser, url):
+    def __init__(self, browser, timeout: int = 3):
         self.browser = browser
-        self.url = url
 
-    def open(self):
-        self.browser.get(self.url)
+        self.timeout = timeout
+        self.wait = WebDriverWait(browser, timeout)
 
-    def get_prices(self, prices, currency_button, dollar):
-        initial_prices = self.browser.find_elements(*prices)
-        initial_price_list = [price.text.strip().replace('€', '').replace(',', '') for price in initial_prices]
+    def assert_element_visible(self, locator: tuple, element_name: str = None):
+        """
+        Проверяет, что элемент отображается на странице.
+        """
 
-        self.browser.find_element(*currency_button).click()
-        WebDriverWait(self.browser, 3).until(EC.visibility_of_element_located(dollar)).click()
+        element_label = element_name or str(locator)
 
-        new_prices = self.browser.find_elements(*prices)
-        new_price_list = [price.text.strip().replace('$', '').replace(',', '') for price in new_prices]
+        try:
+            element = self.wait.until(
+                EC.visibility_of_element_located(locator)
+            )
 
-        return initial_price_list, new_price_list
+            assert element.is_displayed(), (
+                f"Элемент '{element_label}' найден, но не отображается на странице"
+            )
+
+            return element
+
+        except TimeoutException:
+            assert False, (
+                f"Элемент '{element_label}' не стал видимым в течение {self.timeout} секунд"
+            )
+
+    def find_all_elements(self, locator):
+        return self.browser.find_elements(*locator)

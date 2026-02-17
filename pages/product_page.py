@@ -10,8 +10,8 @@ class ProductPage(BasePage):
     REGULAR_PRICE = (By.XPATH, '//*[@class="regular-price"]')
 
     def page_is_visible(self):
-        self.browser.find_element(*self.ADD_TO_CART_BTN)
-        self.browser.find_element(*self.SIZE)
-        self.browser.find_element(*self.QUANTITY)
-        self.browser.find_element(*self.PRODUCT_DESCRIPTION)
-        self.browser.find_element(*self.REGULAR_PRICE)
+        self.assert_element_visible(self.ADD_TO_CART_BTN)
+        self.assert_element_visible(self.SIZE)
+        self.assert_element_visible(self.QUANTITY)
+        self.assert_element_visible(self.PRODUCT_DESCRIPTION)
+        self.assert_element_visible(self.REGULAR_PRICE)

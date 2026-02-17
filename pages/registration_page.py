@@ -12,10 +12,10 @@ class RegistrationPage(BasePage):
     SAVE_BTN = (By.XPATH, '//button[@data-link-action="save-customer"]')
 
     def check_page_elements(self):
-        self.browser.find_element(*self.FIRST_NAME)
-        self.browser.find_element(*self.LAST_NAME)
-        self.browser.find_element(*self.EMAIL)
-        self.browser.find_element(*self.PASSWORD)
-        self.browser.find_element(*self.SHOW_PASSWORD)
-        self.browser.find_element(*self.BIRTHDATE)
-        self.browser.find_element(*self.SAVE_BTN)
+        self.assert_element_visible(self.FIRST_NAME)
+        self.assert_element_visible(self.LAST_NAME)
+        self.assert_element_visible(self.EMAIL)
+        self.assert_element_visible(self.PASSWORD)
+        self.assert_element_visible(self.SHOW_PASSWORD)
+        self.assert_element_visible(self.BIRTHDATE)
+        self.assert_element_visible(self.SAVE_BTN)

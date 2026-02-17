@@ -19,12 +19,7 @@ def browser(request):
 
     driver = None
 
-    if browser_name == "ch":
-        options = ChromeOption()
-        if headless:
-            options.add_argument("--headless")
-        driver = webdriver.Chrome(options=options)
-    elif browser_name == "ff":
+    if browser_name == "ff":
         options = FFOptions()
         if headless:
             options.add_argument("--headless")
@@ -32,10 +27,14 @@ def browser(request):
     elif browser_name == "edge":
         driver = webdriver.Edge()
     else:
-        raise Exception("Driver not supported")
+        options = ChromeOption()
+        if headless:
+            options.add_argument("--headless")
+        driver = webdriver.Chrome(options=options)
 
     driver.base_url = base_url
     driver.maximize_window()
+    driver.implicitly_wait(3)
 
     yield driver
     driver.quit()
