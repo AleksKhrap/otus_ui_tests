@@ -1,12 +1,7 @@
 from selenium.webdriver.common.by import By
 from .base_page import BasePage
-import random
-
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-
-from utils import get_prices
+from utils import get_prices, click_on_random_element
 
 
 class HomePage(BasePage):
@@ -36,8 +31,7 @@ class HomePage(BasePage):
     def open_product_page(self):
         all_products = self.find_all_elements(self.PRODUCTS)
         if all_products:
-            random_product = random.choice(all_products)
-            random_product.click()
+            click_on_random_element(all_products)
         else:
             raise Exception("Products not found")
 
@@ -46,7 +40,7 @@ class HomePage(BasePage):
         self.assert_element_visible(self.CLOSE_BUTTON).click()
 
     def check_cart(self):
-        WebDriverWait(self.browser, 3).until(EC.invisibility_of_element_located(self.MODAL_LABEL))
+        self.assert_element_invisible(self.MODAL_LABEL)
         self.assert_element_visible(self.CART).click()
         products_list = self.find_all_elements(self.CART_ITEMS)
         assert len(products_list) == 1

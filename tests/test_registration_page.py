@@ -11,3 +11,6 @@ class TestRegistrationPage:
 
     def test_check_registration_page_availability(self):
         self.registration_page.check_page_elements()
+
+    def test_create_new_user(self):
+        self.registration_page.register_new_account()
