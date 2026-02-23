@@ -30,7 +30,7 @@ def get_random_email():
     return (get_random_string() + "@" + random.choice(["mail", "gmail", "yandex", "bk"])
             + "." + random.choice(["com", "org", "ru"]))
 
-def get_random_date(start_year=1900, end_year=datetime.now().year):
+def get_random_date(start_year=1910, end_year=datetime.now().year):
     start_date = date(start_year, 1, 1)
     end_date = date(end_year, 12, 31)
 
