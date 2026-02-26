@@ -2,7 +2,6 @@ from selenium.webdriver.common.by import By
 import random
 import string
 from datetime import date, timedelta, datetime
-from selenium.webdriver.common.keys import Keys
 
 PRICES = (By.XPATH, '//*[@class="price"]')
 CURRENCY_BUTTON = (By.XPATH, '//button[@data-toggle="dropdown"]')
@@ -15,8 +14,8 @@ def get_prices(page):
     initial_prices = page.find_all_elements(PRICES)
     initial_price_list = [price.text.strip().replace('€', '').replace(',', '') for price in initial_prices]
 
-    page.assert_element_visible(CURRENCY_BUTTON).click()
-    page.assert_element_visible(DOLLAR).click()
+    page.get_visible_element(CURRENCY_BUTTON).click()
+    page.get_visible_element(DOLLAR).click()
 
     new_prices = page.find_all_elements(PRICES)
     new_price_list = [price.text.strip().replace('$', '').replace(',', '') for price in new_prices]
@@ -44,16 +43,3 @@ def get_random_date(start_year=1910, end_year=datetime.now().year):
 
 def get_random_price(min_price=10.0, max_price=1000.0):
     return round(random.uniform(min_price, max_price), 2)
-
-def click_on_random_element(elements):
-    random_element = random.choice(elements)
-    random_element.click()
-
-def clear_and_send_keys(element, keys):
-    element.send_keys(Keys.CONTROL + 'a')
-    element.send_keys(Keys.DELETE)
-    element.send_keys(keys)
-
-def click_on_all_elements(elements):
-    for element in elements:
-        element.click()

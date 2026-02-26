@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 from .base_page import BasePage
 from selenium.webdriver.common.action_chains import ActionChains
-from utils import get_prices, click_on_random_element
+from utils import get_prices
 
 
 class HomePage(BasePage):
@@ -18,10 +18,10 @@ class HomePage(BasePage):
 
     MODAL_LABEL = (By.XPATH, '//*[@id="myModalLabel"]')
 
-    def check_page_elements(self):
+    def assert_page_elements_is_visible(self):
         self.assert_element_visible(self.LOGO)
 
-        clothes_button = self.assert_element_visible(self.CLOTHES_BTN)
+        clothes_button = self.get_visible_element(self.CLOTHES_BTN)
         ActionChains(self.browser).move_to_element(clothes_button).perform()
         self.assert_element_visible(self.CLOTHES_FOR_MEN_BTN)
 
@@ -31,17 +31,18 @@ class HomePage(BasePage):
     def open_product_page(self):
         all_products = self.find_all_elements(self.PRODUCTS)
         if all_products:
-            click_on_random_element(all_products)
+            self.click_on_random_element(all_products)
         else:
             raise Exception("Products not found")
 
     def add_to_cart(self):
-        self.assert_element_visible(self.ADD_TO_CART_BTN).click()
-        self.assert_element_visible(self.CLOSE_BUTTON).click()
+        self.get_visible_element(self.ADD_TO_CART_BTN).click()
+        self.get_visible_element(self.CLOSE_BUTTON).click()
 
     def check_cart(self):
         self.assert_element_invisible(self.MODAL_LABEL)
-        self.assert_element_visible(self.CART).click()
+        self.get_visible_element(self.CART).click()
+
         products_list = self.find_all_elements(self.CART_ITEMS)
         assert len(products_list) == 1
 

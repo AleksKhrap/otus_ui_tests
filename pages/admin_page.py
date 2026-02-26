@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
 from .base_page import BasePage
-from utils import clear_and_send_keys, get_random_price
+from utils import get_random_price
+from config import settings
 
 
 class AdminPage(BasePage):
@@ -38,7 +39,7 @@ class AdminPage(BasePage):
 
     TEST_PRODUCT_NAME = "Test product"
 
-    def login_form_is_visible(self):
+    def assert_login_form_is_visible(self):
         self.assert_element_visible(self.EMAIL)
         self.assert_element_visible(self.PASSWORD)
         self.assert_element_visible(self.SUBMIT_BUTTON)
@@ -46,33 +47,46 @@ class AdminPage(BasePage):
         self.assert_element_visible(self.STAY_LOGGED_IN)
 
     def input_email(self, email):
-        email_field = self.assert_element_visible(self.EMAIL)
-        clear_and_send_keys(email_field, email)
+        email_field = self.get_visible_element(self.EMAIL)
+        self.clear_and_send_keys(email_field, email)
 
     def input_password(self, password):
-        password_field = self.assert_element_visible(self.PASSWORD)
-        clear_and_send_keys(password_field, password)
+        password_field = self.get_visible_element(self.PASSWORD)
+        self.clear_and_send_keys(password_field, password)
 
     def submit_login(self):
-        self.assert_element_visible(self.SUBMIT_BUTTON).click()
+        self.get_visible_element(self.SUBMIT_BUTTON).click()
 
-    def admin_panel_is_visible(self):
-        self.assert_element_visible(self.EMPLOYEE_ICON)
+    def assert_admin_panel_visible(self):
+        self.assert_element_visible(self.EMPLOYEE_ICON, timeout=30)
+
+    def login_to_admin_panel(self):
+        email, password = settings.get_admin_creds()
+
+        self.input_email(email)
+        self.input_password(password)
+        self.submit_login()
+
+        self.assert_admin_panel_visible()
+
+    def open_products_page(self):
+        self.expand_catalog_menu()
+        self.open_admin_products_page()
 
     def logout(self):
-        self.assert_element_visible(self.EMPLOYEE_ICON).click()
-        self.assert_element_visible(self.SIGN_OUT).click()
+        self.get_visible_element(self.EMPLOYEE_ICON).click()
+        self.get_visible_element(self.SIGN_OUT).click()
 
     def expand_catalog_menu(self):
-        self.assert_element_visible(self.CATALOG_MENU).click()
+        self.get_visible_element(self.CATALOG_MENU).click()
 
     def open_admin_products_page(self):
-        self.assert_element_visible(self.PRODUCTS_SUBMENU).click()
+        self.get_visible_element(self.PRODUCTS_SUBMENU).click()
 
     def switch_to_product_modal(self):
         self.assert_element_visible(self.MODAL_FRAME)
 
-        iframe = self.assert_element_visible(self.IFRAME)
+        iframe = self.get_visible_element(self.IFRAME)
         self.browser.switch_to.frame(iframe)
 
     def get_all_product_id_values(self):
@@ -80,41 +94,42 @@ class AdminPage(BasePage):
         return id_values_list
 
     def add_new_product(self):
-        self.assert_element_visible(self.ADD_NEW_PRODUCT_BTN).click()
+        self.get_visible_element(self.ADD_NEW_PRODUCT_BTN).click()
 
         self.switch_to_product_modal()
-        add_button = self.assert_element_present(self.ADD_PRODUCT_MODAL_BTN)
+        add_button = self.get_present_element(self.ADD_PRODUCT_MODAL_BTN)
         add_button.click()
         self.browser.switch_to.default_content()
 
-        product_name = self.assert_element_visible(self.PRODUCT_NAME)
-        clear_and_send_keys(product_name, self.TEST_PRODUCT_NAME)
+        product_name = self.get_visible_element(self.PRODUCT_NAME)
+        self.clear_and_send_keys(product_name, self.TEST_PRODUCT_NAME)
 
-        self.assert_element_visible(self.PRICING).click()
-        rt_price = self.assert_element_visible(self.RETAIL_PRICE)
+        self.get_visible_element(self.PRICING).click()
+        rt_price = self.get_visible_element(self.RETAIL_PRICE)
         retail_price_value = get_random_price()
-        clear_and_send_keys(rt_price, retail_price_value)
+        self.clear_and_send_keys(rt_price, retail_price_value)
 
         product_name.click()
-        result_rt_price = self.assert_element_visible(self.RESULT_RETAIL_PRICE)
+        result_rt_price = self.get_visible_element(self.RESULT_RETAIL_PRICE)
         result_rt_price_value = result_rt_price.get_attribute('value')
         assert retail_price_value == round(float(result_rt_price_value), 2), \
             f"{retail_price_value} != {result_rt_price_value}"
 
-        cost_price = self.assert_element_visible(self.COST_PRICE)
+        cost_price = self.get_visible_element(self.COST_PRICE)
         cost_price_value = retail_price_value - get_random_price(max_price=10)
-        clear_and_send_keys(cost_price, cost_price_value)
+        self.clear_and_send_keys(cost_price, cost_price_value)
 
-        self.assert_element_visible(self.SAVE_BUTTON).click()
+        self.get_visible_element(self.SAVE_BUTTON).click()
+
         self.assert_element_visible(self.SUCCESSFUL_ALERT)
 
     def delete_product(self):
         id_list_values = self.get_all_product_id_values()
 
-        self.assert_element_visible(self.ADDITIONAL_ACTIONS).click()
-        self.assert_element_visible(self.DELETE_BUTTON).click()
+        self.get_visible_element(self.ADDITIONAL_ACTIONS).click()
+        self.get_visible_element(self.DELETE_BUTTON).click()
 
-        self.assert_element_visible(self.MODAL_DELETE_BUTTON).click()
+        self.get_visible_element(self.MODAL_DELETE_BUTTON).click()
 
         self.assert_element_visible(self.SUCCESSFUL_ALERT)
 
