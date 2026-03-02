@@ -9,7 +9,7 @@ class AccessoriesPage(BasePage):
     PRODUCT_LIST = (By.XPATH, '//*[@class="products row"]')
     WISHLISTS = (By.XPATH, '//button[@class="wishlist-button-add"]')
 
-    def check_page_elements(self):
+    def assert_page_elements_is_visible(self):
         self.assert_element_visible(self.PRODUCT_LIST)
         self.assert_element_visible(PRICES)
         self.assert_element_visible(self.SORT_BY)

@@ -9,7 +9,7 @@ class ProductPage(BasePage):
     PRODUCT_DESCRIPTION = (By.XPATH, '//div[@id="product-description-short-1"]')
     REGULAR_PRICE = (By.XPATH, '//*[@class="regular-price"]')
 
-    def page_is_visible(self):
+    def assert_page_is_visible(self):
         self.assert_element_visible(self.ADD_TO_CART_BTN)
         self.assert_element_visible(self.SIZE)
         self.assert_element_visible(self.QUANTITY)

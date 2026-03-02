@@ -1,25 +1,18 @@
-from pages.admin_page import AdminPage
-import pytest
-from config import settings
-from utils import open_page
-
-
 class TestAdminPage:
-    @pytest.fixture(scope="function", autouse=True)
-    def setup(self, browser):
-        self.admin_page = AdminPage(browser)
-        open_page(self.admin_page, browser.base_url + "/administration")
+    def test_check_admin_page_availability(self, admin_page):
+        admin_page.assert_login_form_is_visible()
 
-    def test_check_admin_page_availability(self):
-        self.admin_page.login_form_is_visible()
+    def test_login_to_admin_page(self, admin_page):
+        admin_page.login_to_admin_panel()
+        admin_page.logout()
+        admin_page.assert_login_form_is_visible()
 
-    def test_login_to_admin_page(self):
-        email, password = settings.get_admin_creds()
+    def test_create_new_product_in_admin_panel(self, admin_page):
+        admin_page.login_to_admin_panel()
+        admin_page.open_products_page()
+        admin_page.add_new_product()
 
-        self.admin_page.input_email(email)
-        self.admin_page.input_password(password)
-        self.admin_page.submit_login()
-
-        self.admin_page.admin_panel_is_visible()
-        self.admin_page.logout()
-        self.admin_page.login_form_is_visible()
+    def test_delete_product_in_admin_panel(self, admin_page):
+        admin_page.login_to_admin_panel()
+        admin_page.open_products_page()
+        admin_page.delete_product()
