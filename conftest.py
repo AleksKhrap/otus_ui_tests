@@ -6,6 +6,7 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.firefox.options import Options as FFOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
 
 from pages.accessories_page import AccessoriesPage
 from pages.admin_page import AdminPage
@@ -65,20 +66,37 @@ def browser(request):
 
     if browser_name == "ff":
         options = FFOptions()
+        options.add_argument("--width=1920")
+        options.add_argument("--height=1080")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         if headless:
             options.add_argument("--headless")
         driver = webdriver.Firefox(options=options)
     elif browser_name == "edge":
-        driver = webdriver.Edge()
+        options = EdgeOptions()
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        if headless:
+            options.add_argument("--headless")
+        driver = webdriver.Edge(options=options)
     else:
         options = ChromeOption()
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         if headless:
             options.add_argument("--headless")
         driver = webdriver.Chrome(options=options)
 
     driver.base_url = base_url
-    driver.maximize_window()
+
+    if not headless:
+        driver.maximize_window()
+
     driver.implicitly_wait(3)
+    driver.set_page_load_timeout(180)
 
     logger.info(f"Базовый URL: {base_url}")
 
