@@ -109,7 +109,7 @@ class AdminPage(BasePage):
     @allure.step("Разворот меню каталога")
     def expand_catalog_menu(self):
         self.logger.info("Разворот меню каталога")
-        self.get_visible_element(self.CATALOG_MENU).click()
+        self.get_visible_element(self.CATALOG_MENU, timeout=30).click()
 
     @allure.step("Открытие раздела товаров в админке")
     def open_admin_products_page(self):
@@ -142,12 +142,14 @@ class AdminPage(BasePage):
         self.get_visible_element(self.ADD_NEW_PRODUCT_BTN).click()
 
         self.switch_to_product_modal()
-        add_button = self.get_present_element(self.ADD_PRODUCT_MODAL_BTN)
+        add_button = self.get_visible_element(self.ADD_PRODUCT_MODAL_BTN, timeout=15)
         add_button.click()
+
+        self.assert_element_invisible(self.ADD_PRODUCT_MODAL_BTN, timeout=15)
         self.browser.switch_to.default_content()
 
         with allure.step("Заполнение названия товара"):
-            product_name = self.get_visible_element(self.PRODUCT_NAME)
+            product_name = self.get_visible_element(self.PRODUCT_NAME, timeout=30)
             self.clear_and_send_keys(product_name, self.TEST_PRODUCT_NAME)
 
             self.logger.debug(f"Название: {self.TEST_PRODUCT_NAME}")
