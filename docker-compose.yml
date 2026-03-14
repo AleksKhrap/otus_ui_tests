@@ -1,0 +1,170 @@
+version: '3.8'
+
+services:
+  selenoid:
+    image: aerokube/selenoid:latest
+    container_name: selenoid
+    restart: unless-stopped
+    volumes:
+      - ./selenoid_config:/etc/selenoid
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["-conf", "/etc/selenoid/browsers.json", "-limit", "10", "-container-network", "selenoid"]
+    ports:
+      - "4444:4444"
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "-", "http://localhost:4444/status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - selenoid
+
+  selenoid-ui:
+    image: aerokube/selenoid-ui:latest
+    container_name: selenoid-ui
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+    depends_on:
+      - selenoid
+    networks:
+      - selenoid
+
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: prestashop
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - selenoid
+
+  prestashop:
+    image: prestashop/prestashop:9-apache
+    container_name: prestashop
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      DB_SERVER: db
+      DB_NAME: prestashop
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_PREFIX: ps_
+      PS_INSTALL_AUTO: "1"
+      PS_LANGUAGE: en
+      PS_COUNTRY: US
+      ADMIN_MAIL: admin@example.com
+      ADMIN_PASSWD: Admin123!
+      PS_FOLDER_ADMIN: administration
+      PS_FOLDER_INSTALL: install
+      PS_DOMAIN: ${PS_DOMAIN:-prestashop}
+      PS_DOMAIN_SSL: ${PS_DOMAIN:-prestashop}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 240s
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ps_data:/var/www/html
+    networks:
+      - selenoid
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: root
+      PMA_PASSWORD: admin
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - selenoid
+
+  prestashop-postinstall:
+    image: alpine:3.19
+    container_name: prestashop-postinstall
+    depends_on:
+      prestashop:
+        condition: service_started
+    volumes:
+      - ps_data:/var/www/html
+    command: >
+      sh -lc '
+        apk add --no-cache curl >/dev/null 2>&1 || true;
+      
+        echo "Waiting for PrestaShop HTTP to respond..."
+        until curl -fsS http://prestashop:80 >/dev/null 2>&1; do sleep 5; done;
+      
+        echo "PrestaShop is responding, waiting for config files..."
+        until [ -f /var/www/html/config/settings.inc.php ] || [ -f /var/www/html/app/config/parameters.php ]; do sleep 2; done;
+      
+        echo "Extra grace period..."
+        sleep 10;
+      
+        echo "Removing install folders..."
+        rm -rf /var/www/html/install /var/www/html/install-dev;
+      
+        echo "Clearing cache..."
+        rm -rf /var/www/html/var/cache/* || true;
+      
+        echo "Post-installation completed."
+      '
+    networks:
+      - selenoid
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: prestashop-tests:latest
+    container_name: prestashop-tests
+    depends_on:
+      selenoid:
+        condition: service_healthy
+      prestashop:
+        condition: service_healthy
+      prestashop-postinstall:
+        condition: service_completed_successfully
+    command:
+      - --browser=${BROWSER:-chrome}
+      - --headless=${HEADLESS:-true}
+      - --url=${URL:-http://prestashop:80}
+      - --executor=${EXECUTOR:-selenoid}
+      - --browser_version=${BROWSER_VERSION:-default}
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./logs:/app/logs
+    networks:
+      - selenoid
+
+volumes:
+  db_data:
+    driver: local
+  ps_data:
+    driver: local
+
+networks:
+  selenoid:
+    external: true

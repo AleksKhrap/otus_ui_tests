@@ -26,17 +26,20 @@ def pytest_runtest_makereport(item, call):
     if report.when == "call" and report.failed:
         if "browser" in item.fixturenames:
             browser = item.funcargs["browser"]
-
-            screenshot = browser.get_screenshot_as_png()
-
-            allure.attach(
-                screenshot,
-                name=f"failure_screenshot_{datetime.now().strftime('%H%M%S')}",
-                attachment_type=allure.attachment_type.PNG
-            )
-
             logger = logging.getLogger("conftest")
-            logger.error(f"Тест {item.name} упал. Скриншот сохранен в отчете Allure")
+
+            try:
+                screenshot = browser.get_screenshot_as_png()
+
+                allure.attach(
+                    screenshot,
+                    name=f"failure_screenshot_{datetime.now().strftime('%H%M%S')}",
+                    attachment_type=allure.attachment_type.PNG
+                )
+
+                logger.error(f"Тест {item.name} упал. Скриншот сохранен в отчете Allure")
+            except Exception as e:
+                logger.error(f"Сессия была закрыта до скриншота: {e}")
 
 
 def pytest_configure():
@@ -49,46 +52,79 @@ def pytest_configure():
 
 def pytest_addoption(parser):
     parser.addoption("--browser", default="ch")
-    parser.addoption("--headless", action="store_true")
+    parser.addoption("--headless", action="store", default="true")
     parser.addoption("--url", default="http://localhost:8081")
+    parser.addoption("--executor", action="store", default="local")
+    parser.addoption("--browser_version", action="store", default="latest")
 
 
 @pytest.fixture()
 def browser(request):
     browser_name = request.config.getoption("--browser")
-    headless = request.config.getoption("--headless")
+    headless = request.config.getoption("--headless") == "true"
     base_url = request.config.getoption("--url")
+    executor = request.config.getoption("--executor")
+    browser_version = request.config.getoption("--browser_version")
 
     logger = logging.getLogger()
-    logger.info(f"Запуск браузера: {browser_name}, headless: {headless}")
+    logger.info(f"Запуск браузера: {browser_name}, headless: {headless}, executor: {executor}")
 
     driver = None
 
-    if browser_name == "ff":
+    if browser_name in ["ff", "firefox"]:
+        browser_name = "firefox"
         options = FFOptions()
         options.add_argument("--width=1920")
         options.add_argument("--height=1080")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        if headless:
-            options.add_argument("--headless")
-        driver = webdriver.Firefox(options=options)
+
     elif browser_name == "edge":
         options = EdgeOptions()
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        if headless:
-            options.add_argument("--headless")
-        driver = webdriver.Edge(options=options)
+
     else:
+        browser_name = "chrome"
         options = ChromeOption()
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        if headless:
-            options.add_argument("--headless")
-        driver = webdriver.Chrome(options=options)
+
+    if headless:
+        options.add_argument("--headless")
+
+    if executor == "selenoid":
+        command_executor = "http://selenoid:4444/wd/hub"
+        logger.info(f"Selenoid: {command_executor}")
+
+        options.set_capability("browserName", browser_name)
+        options.set_capability("browserVersion", browser_version)
+
+        options.set_capability(
+            "selenoid:options",
+            {
+                "enableVNC": True,
+                "enableVideo": False,
+                "sessionTimeout": "3m"
+            }
+        )
+
+        driver = webdriver.Remote(
+            command_executor=command_executor,
+            options=options
+        )
+
+    else:
+        if browser_name == "firefox":
+            driver = webdriver.Firefox(options=options)
+        elif browser_name == "edge":
+            driver = webdriver.Edge(options=options)
+        else:
+            driver = webdriver.Chrome(options=options)
+
+        driver.set_page_load_timeout(180)
 
     driver.base_url = base_url
 
@@ -96,7 +132,6 @@ def browser(request):
         driver.maximize_window()
 
     driver.implicitly_wait(3)
-    driver.set_page_load_timeout(180)
 
     logger.info(f"Базовый URL: {base_url}")
 
