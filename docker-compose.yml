@@ -148,11 +148,11 @@ services:
       prestashop-postinstall:
         condition: service_completed_successfully
     command:
-      --browser ${BROWSER:-chrome} 
-      --headless=${HEADLESS:-true}
-      --url=${URL:-http://prestashop:80} 
-      --executor=${EXECUTOR:-selenoid} 
-      --browser_version=${BROWSER_VERSION:-default}
+      - --browser=${BROWSER:-chrome}
+      - --headless=${HEADLESS:-true}
+      - --url=${URL:-http://prestashop:80}
+      - --executor=${EXECUTOR:-selenoid}
+      - --browser_version=${BROWSER_VERSION:-default}
     volumes:
       - ./allure-results:/app/allure-results
       - ./logs:/app/logs
