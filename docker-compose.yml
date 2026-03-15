@@ -8,9 +8,15 @@ services:
     volumes:
       - ./selenoid_config:/etc/selenoid
       - /var/run/docker.sock:/var/run/docker.sock
-    command: ["-conf", "/etc/selenoid/browsers.json", "-limit", "10", "-container-network", "selenoid"]
+    command: [
+      "-conf", "/etc/selenoid/browsers.json",
+      "-limit", "5",
+      "-container-network", "selenoid"
+    ]
     ports:
       - "4444:4444"
+    environment:
+      - DOCKER_API_VERSION=1.44
     healthcheck:
       test: [ "CMD", "wget", "-q", "-O", "-", "http://localhost:4444/status" ]
       interval: 10s
@@ -72,10 +78,9 @@ services:
       PS_DOMAIN_SSL: ${PS_DOMAIN:-prestashop}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 240s
+      retries: 30
     depends_on:
       db:
         condition: service_healthy
@@ -142,8 +147,6 @@ services:
     container_name: prestashop-tests
     depends_on:
       selenoid:
-        condition: service_healthy
-      prestashop:
         condition: service_healthy
       prestashop-postinstall:
         condition: service_completed_successfully
