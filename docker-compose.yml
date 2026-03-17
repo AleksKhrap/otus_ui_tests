@@ -140,6 +140,8 @@ services:
       - selenoid
 
   tests:
+    profiles:
+      - local
     build:
       context: .
       dockerfile: Dockerfile
