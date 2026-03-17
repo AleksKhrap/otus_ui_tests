@@ -55,9 +55,10 @@ pipeline {
 
         stage('Build test image') {
             steps {
-                sh """
-                    docker build -t prestashop-tests:latest .
-                """
+                script {
+                    imageName = "prestashop-tests:latest"
+                    sh "docker build -t ${imageName} ."
+                }
             }
         }
 
