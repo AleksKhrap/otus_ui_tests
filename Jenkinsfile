@@ -61,24 +61,35 @@ pipeline {
             }
         }
 
-    stage('Run tests') {
-        steps {
-            script {
-                def containerName = "test-${BUILD_NUMBER}-${env.BUILD_ID}"
-                sh """
-                    docker run --name ${containerName} \\
-                        --network selenoid \\
-                        prestashop-tests:latest \\
-                        --browser=${params.BROWSER} \\
-                        --headless=true \\
-                        --url=${params.APP_URL} \\
-                        --executor=${params.EXECUTOR} \\
-                        --browser_version=${params.BROWSER_VERSION} \\
-                        -n ${params.THREADS} || true
+        stage('Run tests') {
+            steps {
+                script {
+                    def containerName = "test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                    try {
+                        sh """
+                            docker run --name ${containerName} \\
+                                --network selenoid \\
+                                ${imageName} \\
+                                --browser=${params.BROWSER} \\
+                                --headless=true \\
+                                --url=${params.APP_URL} \\
+                                --executor=${params.EXECUTOR} \\
+                                --browser_version=${params.BROWSER_VERSION} \\
+                                -n ${params.THREADS}
+                        """
+                    } catch (Exception e) {
+                        exitCode = 1
+                    } finally {
+                        sh """
+                            docker cp ${containerName}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
+                            docker rm -f ${containerName} 2>/dev/null || true
+                            ls -la ./allure-results || true
+                        """
+                    }
 
-                    docker cp ${containerName}:/app/allure-results/. ./allure-results/ 2>&1 || true
-                    docker rm -f ${containerName} || true
-                """
+                    if (exitCode != 0) {
+                        error("Tests failed")
+                    }
                 }
             }
         }
