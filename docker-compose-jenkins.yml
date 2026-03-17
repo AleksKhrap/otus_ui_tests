@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins-with-docker:latest
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./allure-results:/var/jenkins_home/allure-results
+    networks:
+      - selenoid
+
+networks:
+  selenoid:
+    external: true
+
+volumes:
+  jenkins_home:

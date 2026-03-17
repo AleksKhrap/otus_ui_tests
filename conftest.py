@@ -55,7 +55,7 @@ def pytest_addoption(parser):
     parser.addoption("--headless", action="store", default="true")
     parser.addoption("--url", default="http://localhost:8081")
     parser.addoption("--executor", action="store", default="local")
-    parser.addoption("--browser_version", action="store", default="latest")
+    parser.addoption("--browser_version", action="store", default="default")
 
 
 @pytest.fixture()
@@ -99,8 +99,8 @@ def browser(request):
         command_executor = "http://selenoid:4444/wd/hub"
         logger.info(f"Selenoid: {command_executor}")
 
-        options.set_capability("browserName", browser_name)
-        options.set_capability("browserVersion", browser_version)
+        if browser_version != "default":
+            options.set_capability("browserVersion", browser_version)
 
         options.set_capability(
             "selenoid:options",
