@@ -65,6 +65,8 @@ pipeline {
             steps {
                 script {
                     def containerName = "test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                    def exitCode = 0
+
                     try {
                         sh """
                             docker run --name ${containerName} \\
