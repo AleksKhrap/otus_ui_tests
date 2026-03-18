@@ -67,7 +67,7 @@ pipeline {
             steps {
                 script {
                     imageName = "prestashop-tests:latest"
-                    sh "docker build -t ${imageName} ."
+                    sh "docker build --no-cache -t ${imageName} ."
                 }
             }
         }
