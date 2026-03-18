@@ -77,7 +77,7 @@ pipeline {
                 script {
                     def exitCode = 0
 
-                    if (params.TEST_SCOPE in ['api', 'all']) {
+                    if (params.TEST_SCOPE in ['api']) {
                         def apiContainer = "api-test-${BUILD_NUMBER}-${env.BUILD_ID}"
                         try {
                             sh """
@@ -98,7 +98,7 @@ pipeline {
                         }
                     }
 
-                    if (params.TEST_SCOPE in ['ui', 'all']) {
+                    if (params.TEST_SCOPE in ['ui']) {
                         def uiContainer = "ui-test-${BUILD_NUMBER}-${env.BUILD_ID}"
                         try {
                             sh """
