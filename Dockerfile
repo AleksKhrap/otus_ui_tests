@@ -89,9 +89,7 @@ case "$TEST_SCOPE" in\n\
     ;;\n\
   all)\n\
     echo "Запуск всех тестов"\n\
-    pytest tests/api -m api --alluredir=allure-results --clean-alluredir "$@"\n\
-    \n\
-    pytest tests/ui -m ui --alluredir=allure-results --clean-alluredir "$@"\n\
+    pytest tests --alluredir=allure-results --clean-alluredir "$@"\n\
     ;;\n\
   *)\n\
     echo "Неизвестный TEST_SCOPE: ${TEST_SCOPE}"\n\
