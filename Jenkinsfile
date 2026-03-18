@@ -122,8 +122,9 @@ pipeline {
                             """
                         }
                     }
-                if (exitCode != 0) {
-                    error("Tests failed")
+                    if (exitCode != 0) {
+                        error("Tests failed")
+                    }
                 }
             }
         }
