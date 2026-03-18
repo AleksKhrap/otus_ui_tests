@@ -124,6 +124,32 @@ pipeline {
                             """
                         }
                     }
+                    if (params.TEST_SCOPE == 'all') {
+                        def allContainer = "all-test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                        try {
+                            sh """
+                                docker run --name ${allContainer} \\
+                                    --network selenoid \\
+                                    -e TEST_SCOPE=all \\
+                                    ${imageName} \\
+                                    --browser=${params.BROWSER} \\
+                                    --headless=true \\
+                                    --url=${params.APP_URL} \\
+                                    --executor=${params.EXECUTOR} \\
+                                    --browser_version=${params.BROWSER_VERSION} \\
+                                    --api-url=${params.API_URL} \\
+                                    -n ${params.THREADS}
+                            """
+                        } catch (Exception e) {
+                            exitCode = 1
+                        } finally {
+                            sh """
+                                docker cp ${allContainer}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
+                                docker rm -f ${allContainer} 2>/dev/null || true
+                                ls -la ./allure-results || true
+                            """
+                        }
+                    }
                     if (exitCode != 0) {
                         error("Tests failed")
                     }
