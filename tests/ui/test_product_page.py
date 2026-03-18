@@ -1,4 +1,7 @@
 import allure
+import pytest
+
+pytestmark = pytest.mark.ui
 
 
 @allure.epic("Товары")

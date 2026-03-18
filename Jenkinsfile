@@ -2,6 +2,16 @@ pipeline {
     agent any
 
     parameters {
+        choice(
+            name: 'TEST_SCOPE',
+            choices: ['all', 'ui', 'api'],
+            description: 'Вид тестов'
+        )
+        string(
+            name: 'API_URL',
+            defaultValue: 'https://restful-booker.herokuapp.com',
+            description: 'Адрес API Restful-booker'
+        )
         string(
             name: 'EXECUTOR',
             defaultValue: 'selenoid',
@@ -65,31 +75,81 @@ pipeline {
         stage('Run tests') {
             steps {
                 script {
-                    def containerName = "test-${BUILD_NUMBER}-${env.BUILD_ID}"
                     def exitCode = 0
 
-                    try {
-                        sh """
-                            docker run --name ${containerName} \\
-                                --network selenoid \\
-                                ${imageName} \\
-                                --browser=${params.BROWSER} \\
-                                --headless=true \\
-                                --url=${params.APP_URL} \\
-                                --executor=${params.EXECUTOR} \\
-                                --browser_version=${params.BROWSER_VERSION} \\
-                                -n ${params.THREADS}
-                        """
-                    } catch (Exception e) {
-                        exitCode = 1
-                    } finally {
-                        sh """
-                            docker cp ${containerName}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
-                            docker rm -f ${containerName} 2>/dev/null || true
-                            ls -la ./allure-results || true
-                        """
+                    if (params.TEST_SCOPE in ['api']) {
+                        def apiContainer = "api-test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                        try {
+                            sh """
+                                docker run --name ${apiContainer} \\
+                                    --network selenoid \\
+                                    -e TEST_SCOPE=${params.TEST_SCOPE} \\
+                                    ${imageName} \\
+                                    --api-url=${params.API_URL} \\
+                                    -n ${params.THREADS}
+                            """
+                        } catch (Exception e) {
+                            exitCode = 1
+                        } finally {
+                            sh """
+                                docker cp ${apiContainer}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
+                                docker rm -f ${apiContainer} 2>/dev/null || true
+                            """
+                        }
                     }
 
+                    if (params.TEST_SCOPE in ['ui']) {
+                        def uiContainer = "ui-test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                        try {
+                            sh """
+                                docker run --name ${uiContainer} \\
+                                    --network selenoid \\
+                                    -e TEST_SCOPE=${params.TEST_SCOPE} \\
+                                    ${imageName} \\
+                                    --browser=${params.BROWSER} \\
+                                    --headless=true \\
+                                    --url=${params.APP_URL} \\
+                                    --executor=${params.EXECUTOR} \\
+                                    --browser_version=${params.BROWSER_VERSION} \\
+                                    -n ${params.THREADS}
+                            """
+                        } catch (Exception e) {
+                            exitCode = 1
+                        } finally {
+                            sh """
+                                docker cp ${uiContainer}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
+                                docker rm -f ${uiContainer} 2>/dev/null || true
+
+                                ls -la ./allure-results || true
+                            """
+                        }
+                    }
+                    if (params.TEST_SCOPE == 'all') {
+                        def allContainer = "all-test-${BUILD_NUMBER}-${env.BUILD_ID}"
+                        try {
+                            sh """
+                                docker run --name ${allContainer} \\
+                                    --network selenoid \\
+                                    -e TEST_SCOPE=all \\
+                                    ${imageName} \\
+                                    --browser=${params.BROWSER} \\
+                                    --headless=true \\
+                                    --url=${params.APP_URL} \\
+                                    --executor=${params.EXECUTOR} \\
+                                    --browser_version=${params.BROWSER_VERSION} \\
+                                    --api-url=${params.API_URL} \\
+                                    -n ${params.THREADS}
+                            """
+                        } catch (Exception e) {
+                            exitCode = 1
+                        } finally {
+                            sh """
+                                docker cp ${allContainer}:/app/allure-results/. ./allure-results/ 2>/dev/null || true
+                                docker rm -f ${allContainer} 2>/dev/null || true
+                                ls -la ./allure-results || true
+                            """
+                        }
+                    }
                     if (exitCode != 0) {
                         error("Tests failed")
                     }

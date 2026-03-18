@@ -70,11 +70,33 @@ COPY . .
 RUN mkdir -p allure-results logs
 
 RUN echo '#!/bin/bash\n\
+set -e\n\
+TEST_SCOPE="${TEST_SCOPE:-all}"\n\
+\n\
 echo "=========================================="\n\
-echo "Запуск тестов PrestaShop"\n\
+echo "Запуск тестов Scope: ${TEST_SCOPE}"\n\
 echo "Получены аргументы: $@"\n\
 echo "=========================================="\n\
-pytest tests/ --alluredir=allure-results --clean-alluredir "$@"\n\
+\n\
+case "$TEST_SCOPE" in\n\
+  ui)\n\
+    echo "Запуск UI тестов"\n\
+    pytest tests/ui -m ui --alluredir=allure-results --clean-alluredir "$@"\n\
+    ;;\n\
+  api)\n\
+    echo "Запуск API тестов"\n\
+    pytest tests/api -m api --alluredir=allure-results --clean-alluredir "$@"\n\
+    ;;\n\
+  all)\n\
+    echo "Запуск всех тестов"\n\
+    pytest tests --alluredir=allure-results --clean-alluredir "$@"\n\
+    ;;\n\
+  *)\n\
+    echo "Неизвестный TEST_SCOPE: ${TEST_SCOPE}"\n\
+    echo "Доступные значения: ui | api | all"\n\
+    exit 1\n\
+    ;;\n\
+esac\n\
 ' > /app/run_tests.sh && chmod +x /app/run_tests.sh
 
 ENTRYPOINT ["/app/run_tests.sh"]
