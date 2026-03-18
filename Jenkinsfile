@@ -83,8 +83,9 @@ pipeline {
                             sh """
                                 docker run --name ${apiContainer} \\
                                     --network selenoid \\
+                                    -e TEST_SCOPE=${params.TEST_SCOPE}
                                     ${imageName} \\
-                                    --api --api-url=${params.API_URL} \\
+                                    --api-url=${params.API_URL} \\
                                     -n ${params.THREADS}
                             """
                         } catch (Exception e) {
@@ -103,6 +104,7 @@ pipeline {
                             sh """
                                 docker run --name ${uiContainer} \\
                                     --network selenoid \\
+                                    -e TEST_SCOPE=${params.TEST_SCOPE}
                                     ${imageName} \\
                                     --browser=${params.BROWSER} \\
                                     --headless=true \\
