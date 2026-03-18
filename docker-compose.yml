@@ -152,6 +152,8 @@ services:
         condition: service_healthy
       prestashop-postinstall:
         condition: service_completed_successfully
+    environment:
+      - TEST_SCOPE=${TEST_SCOPE:-all}
     command:
       - --browser=${BROWSER:-chrome}
       - --headless=${HEADLESS:-true}

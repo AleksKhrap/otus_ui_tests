@@ -42,12 +42,22 @@ def pytest_runtest_makereport(item, call):
                 logger.error(f"Сессия была закрыта до скриншота: {e}")
 
 
-def pytest_configure():
+def pytest_configure(config):
     setup_logging()
 
     logger = logging.getLogger()
-    logger.info("ЗАПУСК ТЕСТОВ")
-    logger.info(f"Время: {datetime.now()}")
+
+    test_args = ' '.join(config.args)
+
+    if 'tests/ui' in test_args:
+        logger.info("ЗАПУСК UI ТЕСТОВ")
+        logger.info(f"Время: {datetime.now()}")
+    elif 'tests/api' in test_args:
+        logger.info("ЗАПУСК API ТЕСТОВ")
+        logger.info(f"Время: {datetime.now()}")
+    else:
+        logger.info("ЗАПУСК ВСЕХ ТЕСТОВ")
+        logger.info(f"Время: {datetime.now()}")
 
 
 def pytest_addoption(parser):

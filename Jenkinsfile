@@ -2,6 +2,11 @@ pipeline {
     agent any
 
     parameters {
+        choice(
+            name: 'TEST_SCOPE',
+            choices: ['all', 'ui', 'api'],
+            description: 'Вид тестов'
+        )
         string(
             name: 'EXECUTOR',
             defaultValue: 'selenoid',
@@ -68,16 +73,36 @@ pipeline {
                     def containerName = "test-${BUILD_NUMBER}-${env.BUILD_ID}"
                     def exitCode = 0
 
+                    def dockerArgs = ""
+                    if (params.TEST_SCOPE == 'ui') {
+                        dockerArgs = """
+                            --browser=${params.BROWSER} \\
+                            --headless=true \\
+                            --url=${params.APP_URL} \\
+                            --executor=${params.EXECUTOR} \\
+                            --browser_version=${params.BROWSER_VERSION}
+                        """
+                    }
+                    else if (params.TEST_SCOPE == 'api') {
+                        dockerArgs = "--api --api-url=${params.APP_URL}"
+                    }
+                    else { // all
+                        dockerArgs = """
+                            --browser=${params.BROWSER} \\
+                            --headless=true \\
+                            --url=${params.APP_URL} \\
+                            --executor=${params.EXECUTOR} \\
+                            --browser_version=${params.BROWSER_VERSION} \\
+                            --api
+                        """
+                    }
+
                     try {
                         sh """
                             docker run --name ${containerName} \\
                                 --network selenoid \\
                                 ${imageName} \\
-                                --browser=${params.BROWSER} \\
-                                --headless=true \\
-                                --url=${params.APP_URL} \\
-                                --executor=${params.EXECUTOR} \\
-                                --browser_version=${params.BROWSER_VERSION} \\
+                                ${dockerArgs} \\
                                 -n ${params.THREADS}
                         """
                     } catch (Exception e) {
