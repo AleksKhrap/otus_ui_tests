@@ -66,6 +66,7 @@ def pytest_addoption(parser):
     parser.addoption("--url", default="http://localhost:8081")
     parser.addoption("--executor", action="store", default="local")
     parser.addoption("--browser_version", action="store", default="default")
+    parser.addoption("--api-url", action="store", default="https://restful-booker.herokuapp.com")
 
 
 @pytest.fixture()

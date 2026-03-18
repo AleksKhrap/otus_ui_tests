@@ -17,14 +17,6 @@ def pytest_runtest_makereport(item, call):
         context.attach()
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--api-url",
-        action="store",
-        default="https://restful-booker.herokuapp.com",
-    )
-
-
 @pytest.fixture()
 def api_context() -> ApiContext:
     return ApiContext()
